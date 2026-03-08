@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>8-Puzzle Game | Manhattan Distance Solver</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .game-container {
+            background: white;
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .subtitle span {
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        /* Stats Panel */
+        .stats-panel {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e9ecf2 100%);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            color: #333;
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .stat-value#manhattanValue {
+            color: #667eea;
+        }
+
+        .stat-value#movesValue {
+            color: #764ba2;
+        }
+
+        .stat-value#statusValue {
+            font-size: 1.2em;
+            color: #48bb78;
+        }
+
+        /* Game Board */
+        .board-container {
+            background: #2d3748;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            aspect-ratio: 1;
+        }
+
+        .tile {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3em;
+            font-weight: bold;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            aspect-ratio: 1;
+        }
+
+        .tile:hover:not(.empty) {
+            transform: scale(1.05);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .tile.empty {
+            background: #4a5568;
+            cursor: default;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5);
+        }
+
+        .tile.hint {
+            border: 4px solid #fbbf24;
+            box-shadow: 0 0 20px #fbbf24;
+        }
+
+        /* Control Buttons */
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            padding: 15px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-shuffle {
+            background: linear-gradient(135deg, #f56565 0%, #c53030 100%);
+        }
+
+        .btn-hint {
+            background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+        }
+
+        .btn-solve {
+            background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+        }
+
+        .btn-reset {
+            background: linear-gradient(135deg, #a0aec0 0%, #4a5568 100%);
+        }
+
+        /* Info Panel */
+        .info-panel {
+            background: #edf2f7;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .info-title {
+            color: #333;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-title i {
+            color: #667eea;
+            font-style: normal;
+            font-size: 1.2em;
+        }
+
+        .info-content {
+            color: #4a5568;
+            line-height: 1.6;
+            font-size: 0.95em;
+        }
+
+        .manhattan-formula {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 1.1em;
+            color: #2d3748;
+            border-left: 4px solid #667eea;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #a0aec0;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 500px) {
+            .game-container {
+                padding: 20px;
+            }
+            
+            .stats-panel {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .controls {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .tile {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>🧩 8-Puzzle</h1>
+        <div class="subtitle">with <span>Manhattan Distance</span> Heuristic</div>
+        
+        <!-- Stats Panel -->
+        <div class="stats-panel">
+            <div class="stat-item">
+                <div class="stat-label">Moves</div>
+                <div class="stat-value" id="movesValue">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Manhattan Distance</div>
+                <div class="stat-value" id="manhattanValue">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Status</div>
+                <div class="stat-value" id="statusValue">Playing</div>
+            </div>
+        </div>
+
+        <!-- Game Board -->
+        <div class="board-container">
+            <div class="board" id="board"></div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <button class="btn btn-shuffle" id="shuffleBtn">🔄 Shuffle</button>
+            <button class="btn btn-hint" id="hintBtn">💡 Hint</button>
+            <button class="btn btn-solve" id="solveBtn">⚡ Solve</button>
+            <button class="btn btn-reset" id="resetBtn">🔄 Reset</button>
+        </div>
+
+        <!-- Information Panel -->
+        <div class="info-panel">
+            <div class="info-title">
+                <i>📊</i> Manhattan Distance Explained
+            </div>
+            <div class="info-content">
+                <p>The Manhattan distance heuristic calculates how far each tile is from its goal position:</p>
+                <div class="manhattan-formula">
+                    h(n) = Σ |current_row - goal_row| + |current_col - goal_col|
+                </div>
+                <p><strong>Current distance: <span id="currentDistance">0</span></strong> (Lower is better, 0 = solved)</p>
+                <p>The A* algorithm uses this value to find the optimal solution path.</p>
+            </div>
+        </div>
+
+        <div class="footer">
+            Click on any tile adjacent to the empty space to move | Auto-solver uses A* algorithm
+        </div>
+    </div>
+
+    <script>
+        class EightPuzzle {
+            constructor() {
+                // Goal state (1-8 with 0 representing empty)
+                this.goalState = [
+                    [1, 2, 3],
+                    [4, 5, 6],
+                    [7, 8, 0]
+                ];
+                
+                // Initial solvable state (shuffled but solvable)
+                this.initialState = [
+                    [1, 2, 3],
+                    [4, 5, 6],
+                    [7, 0, 8]
+                ];
+                
+                this.currentState = JSON.parse(JSON.stringify(this.initialState));
+                this.moveCount = 0;
+                this.solving = false;
+                this.solutionPath = [];
+                this.currentSolutionStep = 0;
+                this.solveInterval = null;
+                
+                // DOM elements
+                this.boardElement = document.getElementById('board');
+                this.movesElement = document.getElementById('movesValue');
+                this.manhattanElement = document.getElementById('manhattanValue');
+                this.statusElement = document.getElementById('statusValue');
+                this.currentDistanceElement = document.getElementById('currentDistance');
+                
+                // Bind methods
+                this.render = this.render.bind(this);
+                this.handleTileClick = this.handleTileClick.bind(this);
+                
+                // Initialize
+                this.render();
+            }
+            
+            // Find empty tile position (0)
+            findEmpty(state = this.currentState) {
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 3; j++) {
+                        if (state[i][j] === 0) return { row: i, col: j };
+                    }
+                }
+                return { row: 2, col: 2 };
+            }
+            
+            // MANHATTAN DISTANCE CALCULATION - Core algorithm
+            calculateManhattan(state = this.currentState) {
+                let distance = 0;
+                
+                for (let row = 0; row < 3; row++) {
+                    for (let col = 0; col < 3; col++) {
+                        const value = state[row][col];
+                        if (value !== 0) {
+                            // Goal position for this value (1-8)
+                            const goalRow = Math.floor((value - 1) / 3);
+                            const goalCol = (value - 1) % 3;
+                            
+                            // Add Manhattan distance for this tile
+                            distance += Math.abs(row - goalRow) + Math.abs(col - goalCol);
+                        }
+                    }
+                }
+                
+                return distance;
+            }
+            
+            // Check if puzzle is solved
+            isSolved(state = this.currentState) {
+                return this.calculateManhattan(state) === 0;
+            }
+            
+            // Get all possible moves from current state
+            getPossibleMoves(state, emptyPos) {
+                const moves = [];
+                const directions = [
+                    { row: -1, col: 0 }, // up
+                    { row: 1, col: 0 },  // down
+                    { row: 0, col: -1 }, // left
+                    { row: 0, col: 1 }   // right
+                ];
+                
+                for (const dir of directions) {
+                    const newRow = emptyPos.row + dir.row;
+                    const newCol = emptyPos.col + dir.col;
+                    
+                    if (newRow >= 0 && newRow < 3 && newCol >= 0 && newCol < 3) {
+                        // Create new state by swapping
+                        const newState = JSON.parse(JSON.stringify(state));
+                        newState[emptyPos.row][emptyPos.col] = newState[newRow][newCol];
+                        newState[newRow][newCol] = 0;
+                        
+                        moves.push({
+                            state: newState,
+                            emptyPos: { row: newRow, col: newCol }
+                        });
+                    }
+                }
+                
+                return moves;
+            }
+            
+            // A* algorithm to find solution
+            findSolution() {
+                const startState = JSON.parse(JSON.stringify(this.currentState));
+                const startEmpty = this.findEmpty(startState);
+                
+                // Priority queue simulation
+                const openSet = [{
+                    state: startState,
+                    emptyPos: startEmpty,
+                    g: 0,
+                    h: this.calculateManhattan(startState),
+                    parent: null
+                }];
+                
+                const closedSet = new Set();
+                
+                while (openSet.length > 0) {
+                    // Sort by f = g + h
+                    openSet.sort((a, b) => (a.g + a.h) - (b.g + b.h));
+                    const current = openSet.shift();
+                    
+                    const stateKey = JSON.stringify(current.state);
+                    
+                    if (closedSet.has(stateKey)) continue;
+                    closedSet.add(stateKey);
+                    
+                    // Check if goal state
+                    if (current.h === 0) {
+                        // Reconstruct path
+                        const path = [];
+                        let node = current;
+                        while (node) {
+                            path.unshift(node.state);
+                            node = node.parent;
+                        }
+                        return path;
+                    }
+                    
+                    // Explore neighbors
+                    const moves = this.getPossibleMoves(current.state, current.emptyPos);
+                    
+                    for (const move of moves) {
+                        const moveKey = JSON.stringify(move.state);
+                        if (!closedSet.has(moveKey)) {
+                            openSet.push({
+                                state: move.state,
+                                emptyPos: move.emptyPos,
+                                g: current.g + 1,
+                                h: this.calculateManhattan(move.state),
+                                parent: current
+                            });
+                        }
+                    }
+                }
+                
+                return null; // No solution found
+            }
+            
+            // Move tile
+            moveTile(row, col) {
+                const emptyPos = this.findEmpty();
+                
+                // Check if clicked tile is adjacent to empty space
+                const isAdjacent = (
+                    (Math.abs(row - emptyPos.row) === 1 && col === emptyPos.col) ||
+                    (Math.abs(col - emptyPos.col) === 1 && row === emptyPos.row)
+                );
+                
+                if (isAdjacent) {
+                    // Swap tiles
+                    this.currentState[emptyPos.row][emptyPos.col] = this.currentState[row][col];
+                    this.currentState[row][col] = 0;
+                    this.moveCount++;
+                    
+                    this.render();
+                    
+                    // Check if solved
+                    if (this.isSolved()) {
+                        this.statusElement.textContent = 'Solved! 🎉';
+                        this.statusElement.style.color = '#48bb78';
+                    }
+                    
+                    return true;
+                }
+                
+                return false;
+            }
+            
+            // Shuffle board
+            shuffle() {
+                // Perform 30 random moves
+                for (let i = 0; i < 30; i++) {
+                    const emptyPos = this.findEmpty();
+                    const moves = this.getPossibleMoves(this.currentState, emptyPos);
+                    const randomMove = moves[Math.floor(Math.random() * moves.length)];
+                    this.currentState = randomMove.state;
+                }
+                
+                this.moveCount = 0;
+                this.statusElement.textContent = 'Playing';
+                this.statusElement.style.color = '#48bb78';
+                this.render();
+            }
+            
+            // Get hint (best next move)
+            getHint() {
+                const emptyPos = this.findEmpty();
+                const moves = this.getPossibleMoves(this.currentState, emptyPos);
+                
+                let bestMove = null;
+                let minDistance = Infinity;
+                
+                for (const move of moves) {
+                    const distance = this.calculateManhattan(move.state);
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        bestMove = move.state;
+                    }
+                }
+                
+                return bestMove;
+            }
+            
+            // Show hint
+            showHint() {
+                const hintState = this.getHint();
+                if (hintState) {
+                    // Highlight the tile that should move
+                    for (let i = 0; i < 3; i++) {
+                        for (let j = 0; j < 3; j++) {
+                            if (this.currentState[i][j] !== hintState[i][j] && this.currentState[i][j] !== 0) {
+                                // This tile moved
+                                const tileElement = document.querySelector(`[data-row="${i}"][data-col="${j}"]`);
+                                if (tileElement) {
+                                    tileElement.classList.add('hint');
+                                    setTimeout(() => {
+                                        tileElement.classList.remove('hint');
+                                    }, 2000);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Auto-solve animation
+            startSolving() {
+                if (this.solving) return;
+                
+                this.statusElement.textContent = 'Solving...';
+                this.solving = true;
+                
+                // Find solution path
+                this.solutionPath = this.findSolution();
+                
+                if (!this.solutionPath || this.solutionPath.length <= 1) {
+                    alert('No solution found!');
+                    this.solving = false;
+                    this.statusElement.textContent = 'Playing';
+                    return;
+                }
+                
+                this.currentSolutionStep = 1; // Skip current state
+                this.solveInterval = setInterval(() => {
+                    if (this.currentSolutionStep < this.solutionPath.length) {
+                        this.currentState = JSON.parse(JSON.stringify(this.solutionPath[this.currentSolutionStep]));
+                        this.moveCount++;
+                        this.render();
+                        this.currentSolutionStep++;
+                    } else {
+                        this.stopSolving();
+                    }
+                }, 300);
+            }
+            
+            stopSolving() {
+                if (this.solveInterval) {
+                    clearInterval(this.solveInterval);
+                    this.solveInterval = null;
+                }
+                this.solving = false;
+                this.statusElement.textContent = this.isSolved() ? 'Solved! 🎉' : 'Playing';
+            }
+            
+            // Reset to initial state
+            reset() {
+                this.stopSolving();
+                this.currentState = JSON.parse(JSON.stringify(this.initialState));
+                this.moveCount = 0;
+                this.statusElement.textContent = 'Playing';
+                this.statusElement.style.color = '#48bb78';
+                this.render();
+            }
+            
+            // Render the board
+            render() {
+                const manhattan = this.calculateManhattan();
+                this.manhattanElement.textContent = manhattan;
+                this.currentDistanceElement.textContent = manhattan;
+                this.movesElement.textContent = this.moveCount;
+                
+                let boardHTML = '';
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 3; j++) {
+                        const value = this.currentState[i][j];
+                        const isEmpty = value === 0;
+                        boardHTML += `
+                            <div class="tile ${isEmpty ? 'empty' : ''}" 
+                                 data-row="${i}" 
+                                 data-col="${j}"
+                                 onclick="game.handleTileClick(${i}, ${j})">
+                                ${isEmpty ? '' : value}
+                            </div>
+                        `;
+                    }
+                }
+                this.boardElement.innerHTML = boardHTML;
+            }
+            
+            // Handle tile click
+            handleTileClick(row, col) {
+                if (this.solving) {
+                    this.stopSolving();
+                }
+                this.moveTile(row, col);
+            }
+        }
+
+        // Initialize game
+        const game = new EightPuzzle();
+
+        // Button event listeners
+        document.getElementById('shuffleBtn').addEventListener('click', () => {
+            game.stopSolving();
+            game.shuffle();
+        });
+
+        document.getElementById('hintBtn').addEventListener('click', () => {
+            if (!game.solving) {
+                game.showHint();
+            }
+        });
+
+        document.getElementById('solveBtn').addEventListener('click', () => {
+            if (!game.solving) {
+                game.startSolving();
+            } else {
+                game.stopSolving();
+            }
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            game.reset();
+        });
+    </script>
+</body>
+</html>
