@@ -1,2 +1,9 @@
-# 8_puzzle
-A web application adding certain unique features for the eight puzzle game where the manhattan distance calculation is also show making it easy to understand.
+This project is an interactive web application that implements the classic Eight Puzzle Problem, a well-known problem in Artificial Intelligence used to demonstrate search algorithms and heuristic techniques. The application enhances the traditional puzzle game by integrating unique features that make it easier for users to understand the underlying problem-solving process.
+
+One of the key features of the application is the real-time display of Manhattan Distance calculations, which is a commonly used heuristic function in AI search algorithms such as A*. As the user moves the tiles, the system dynamically calculates and displays the Manhattan Distance for each state, allowing users to visually understand how the heuristic evaluates the puzzle’s progress toward the goal state. This feature makes the application particularly useful for educational purposes, helping students grasp how heuristic functions guide intelligent search.
+
+The user interface of the application is designed to be clean, responsive, and interactive. The front-end is developed using HTML, CSS, and JavaScript, which handle the layout, styling, and dynamic behavior of the puzzle board. JavaScript manages tile movements, state transitions, and heuristic calculations, ensuring smooth gameplay and immediate feedback to the user.
+
+Additionally, the project integrates Flutter for cross-platform interface components and utilizes Gradle for efficient build management and dependency handling. This combination enables the application to maintain a scalable structure while supporting modern development practices.
+
+Overall, the application not only provides an engaging puzzle-solving experience but also serves as a learning tool for understanding heuristic search algorithms, state space exploration, and AI problem-solving techniques.
